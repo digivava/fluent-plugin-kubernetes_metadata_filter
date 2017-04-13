@@ -71,9 +71,9 @@ module Fluent
       newhsh
     end
 
-    def get_metadata(namespace_name, pod_name)
+    def get_metadata(namespace_name, pod_id)
       begin
-        metadata = @client.get_pod(pod_name, namespace_name)
+        metadata = @client.get_pod(pod_id, namespace_name)
         return if !metadata
         labels = syms_to_strs(metadata['metadata']['labels'].to_h)
         annotations = match_annotations(syms_to_strs(metadata['metadata']['annotations'].to_h))
@@ -83,8 +83,8 @@ module Fluent
         end
         kubernetes_metadata = {
             'namespace_name' => namespace_name,
-            'pod_id'         => metadata['metadata']['uid'],
-            'pod_name'       => pod_name,
+            'pod_id'         => pod_id,
+            'pod_name'       => metadata['metadata']['name'],
             'labels'         => labels,
             'host'           => metadata['spec']['nodeName']
         }
@@ -225,7 +225,7 @@ module Fluent
             if metadata
               md = this.get_metadata(
                 metadata['kubernetes']['namespace_name'],
-                metadata['kubernetes']['pod_name']
+                metadata['kubernetes']['pod_id']
               )
               md
             end
@@ -271,7 +271,7 @@ module Fluent
               },
               'kubernetes' => {
                 'namespace_name' => match_data['namespace'],
-                'pod_name'       => match_data['pod_name']
+                'pod_id'       => match_data['pod_id']
               }
             }
             if @kubernetes_url.present?
@@ -282,7 +282,7 @@ module Fluent
                 if metadata
                   md = this.get_metadata(
                     metadata['kubernetes']['namespace_name'],
-                    metadata['kubernetes']['pod_name']
+                    metadata['kubernetes']['pod_id']
                   )
                   md
                 end
