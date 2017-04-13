@@ -357,51 +357,55 @@ module Fluent
     end
 
     def start_watch
-      begin
-        resource_version = @client.get_pods.resourceVersion
-        watcher          = @client.watch_pods(resource_version)
-      rescue Exception => e
-        raise Fluent::ConfigError, "Exception encountered fetching metadata from Kubernetes API endpoint: #{e.message}"
-      end
+      loop do
+        begin
+          resource_version = @client.get_pods.resourceVersion
+          watcher          = @client.watch_pods(resource_version)
+        rescue Exception => e
+          raise Fluent::ConfigError, "Exception encountered fetching metadata from Kubernetes API endpoint: #{e.message}"
+        end
 
-      watcher.each do |notice|
-        case notice.type
-          when 'MODIFIED'
-            cache_key = "#{notice.object['metadata']['namespace']}_#{notice.object['metadata']['name']}"
-            cached    = @cache[cache_key]
-            if cached
-              # Only thing that can be modified is labels and (possibly) annotations
-              labels = syms_to_strs(notice.object.metadata.labels.to_h)
-              annotations = match_annotations(syms_to_strs(notice.object.metadata.annotations.to_h))
-              if @de_dot
-                self.de_dot!(labels)
-                self.de_dot!(annotations)
+        watcher.each do |notice|
+          case notice.type
+            when 'MODIFIED'
+              cache_key = "#{notice.object['metadata']['namespace']}_#{notice.object['metadata']['name']}"
+              cached    = @cache[cache_key]
+              if cached
+                # Only thing that can be modified is labels and (possibly) annotations
+                labels = syms_to_strs(notice.object.metadata.labels.to_h)
+                annotations = match_annotations(syms_to_strs(notice.object.metadata.annotations.to_h))
+                if @de_dot
+                  self.de_dot!(labels)
+                  self.de_dot!(annotations)
+                end
+                cached['labels'] = labels
+                cached['annotations'] = annotations
+                @cache[cache_key] = cached
               end
-              cached['labels'] = labels
-              cached['annotations'] = annotations
-              @cache[cache_key] = cached
-            end
-          when 'DELETED'
-            cache_key = "#{notice.object['metadata']['namespace']}_#{notice.object['metadata']['name']}"
-            @cache.delete(cache_key)
-          else
-            # Don't pay attention to creations, since the created pod may not
-            # end up on this node.
+            when 'DELETED'
+              cache_key = "#{notice.object['metadata']['namespace']}_#{notice.object['metadata']['name']}"
+              @cache.delete(cache_key)
+            else
+              # Don't pay attention to creations, since the created pod may not
+              # end up on this node.
+          end
         end
       end
     end
 
     def start_namespace_watch
-      resource_version = @client.get_namespaces.resourceVersion
-      watcher          = @client.watch_namespaces(resource_version)
-      watcher.each do |notice|
-        puts notice
-        case notice.type
-          when 'DELETED'
-            @namespace_cache.delete(notice.object['metadata']['name'])
-          else
-            # We only care about each namespace's name and UID, neither of which
-            # is modifiable, so we only have to care about deletions.
+      loop do
+        resource_version = @client.get_namespaces.resourceVersion
+        watcher          = @client.watch_namespaces(resource_version)
+        watcher.each do |notice|
+          puts notice
+          case notice.type
+            when 'DELETED'
+              @namespace_cache.delete(notice.object['metadata']['name'])
+            else
+              # We only care about each namespace's name and UID, neither of which
+              # is modifiable, so we only have to care about deletions.
+          end
         end
       end
     end
