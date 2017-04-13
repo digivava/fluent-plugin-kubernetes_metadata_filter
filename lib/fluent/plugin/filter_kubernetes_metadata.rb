@@ -218,7 +218,7 @@ module Fluent
         }
 
         if @kubernetes_url.present?
-          cache_key = "#{metadata['kubernetes']['namespace_name']}_#{metadata['kubernetes']['pod_name']}"
+          cache_key = "#{metadata['kubernetes']['namespace_name']}_#{metadata['kubernetes']['pod_id']}"
 
           this     = self
           kubernetes_metadata = @cache.getset(cache_key) {
@@ -275,7 +275,7 @@ module Fluent
               }
             }
             if @kubernetes_url.present?
-              cache_key = "#{metadata['kubernetes']['namespace_name']}_#{metadata['kubernetes']['pod_name']}"
+              cache_key = "#{metadata['kubernetes']['namespace_name']}_#{metadata['kubernetes']['pod_id']}"
 
               this     = self
               kubernetes_metadata = @cache.getset(cache_key) {
