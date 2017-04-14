@@ -362,6 +362,7 @@ module Fluent
     end
 
     def start_watch
+      log.debug "look, your logging works!"
       loop do
         begin
           resource_version = @client.get_pods.resourceVersion
