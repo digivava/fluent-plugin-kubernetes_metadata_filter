@@ -16,6 +16,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+require 'fluent/log'
+
 module Fluent
   class KubernetesMetadataFilter < Fluent::Filter
     K8_POD_CA_CERT = 'ca.crt'
@@ -106,7 +109,6 @@ module Fluent
       require 'active_support/core_ext/object/blank'
       require 'lru_redux'
 
-      log.level = "debug"
       log.debug "look, I'm logging!"
 
       if @de_dot && (@de_dot_separator =~ /\./).present?
