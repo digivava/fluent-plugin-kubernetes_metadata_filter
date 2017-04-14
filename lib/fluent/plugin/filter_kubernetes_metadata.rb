@@ -18,6 +18,7 @@
 #
 
 require 'fluent/log'
+require 'logfmt'
 
 module Fluent
   class KubernetesMetadataFilter < Fluent::Filter
