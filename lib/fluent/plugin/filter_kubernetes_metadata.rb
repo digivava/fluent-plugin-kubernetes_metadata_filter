@@ -17,8 +17,6 @@
 # limitations under the License.
 #
 
-require 'fluent/log'
-require 'logfmt'
 
 module Fluent
   class KubernetesMetadataFilter < Fluent::Filter
@@ -109,8 +107,13 @@ module Fluent
       require 'kubeclient'
       require 'active_support/core_ext/object/blank'
       require 'lru_redux'
+      require 'fluent/log'
+      require 'logfmt'
 
-      log.debug "look, I'm logging!"
+      log.debug "debug! look, I'm logging!"
+      log.trace "trace! look, I'm logging!"
+      log.warn "warn! look, I'm logging!"
+      puts "puts! look, I'm logging!"
 
       if @de_dot && (@de_dot_separator =~ /\./).present?
         raise Fluent::ConfigError, "Invalid de_dot_separator: cannot be or contain '.'"
