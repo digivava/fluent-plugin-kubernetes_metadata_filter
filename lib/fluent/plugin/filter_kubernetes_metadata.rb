@@ -213,7 +213,7 @@ module Fluent
           },
           'kubernetes' => {
             'namespace_name' => match_data['namespace'],
-            'pod_name'       => match_data['pod_name'],
+            'pod_id'       => match_data['pod_id'],
           }
         }
 
@@ -227,6 +227,8 @@ module Fluent
                 metadata['kubernetes']['namespace_name'],
                 metadata['kubernetes']['pod_id']
               )
+              log.debug "(from json files) get_metadata(#{metadata['kubernetes']['namespace_name']},
+              #{metadata['kubernetes']['pod_id']}): #{md}"
               md
             end
           }
@@ -277,6 +279,7 @@ module Fluent
             if @kubernetes_url.present?
               cache_key = "#{metadata['kubernetes']['namespace_name']}_#{metadata['kubernetes']['pod_id']}"
 
+
               this     = self
               kubernetes_metadata = @cache.getset(cache_key) {
                 if metadata
@@ -284,6 +287,8 @@ module Fluent
                     metadata['kubernetes']['namespace_name'],
                     metadata['kubernetes']['pod_id']
                   )
+                  log.debug "(from journal) get_metadata(#{metadata['kubernetes']['namespace_name']},
+                  #{metadata['kubernetes']['pod_id']}): #{md}"
                   md
                 end
               }
