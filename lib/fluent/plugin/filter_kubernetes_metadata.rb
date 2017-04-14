@@ -106,6 +106,8 @@ module Fluent
       require 'active_support/core_ext/object/blank'
       require 'lru_redux'
 
+      log.debug("look, I'm logging!")
+
       if @de_dot && (@de_dot_separator =~ /\./).present?
         raise Fluent::ConfigError, "Invalid de_dot_separator: cannot be or contain '.'"
       end
@@ -362,7 +364,7 @@ module Fluent
     end
 
     def start_watch
-      log.debug "look, your logging works!"
+      log.debug "look, you started the watch!"
       loop do
         begin
           resource_version = @client.get_pods.resourceVersion
