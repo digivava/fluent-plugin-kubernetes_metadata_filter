@@ -106,8 +106,8 @@ module Fluent
       require 'active_support/core_ext/object/blank'
       require 'lru_redux'
 
+      log.level = "debug"
       log.debug "look, I'm logging!"
-      puts "look, I'm logging with puts!"
 
       if @de_dot && (@de_dot_separator =~ /\./).present?
         raise Fluent::ConfigError, "Invalid de_dot_separator: cannot be or contain '.'"
