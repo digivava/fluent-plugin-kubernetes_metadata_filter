@@ -388,6 +388,7 @@ module Fluent
         watcher.each do |notice|
           case notice.type
             when 'MODIFIED'
+              log.debug "look, a pod was modified!"
               cache_key = "#{notice.object['metadata']['namespace']}_#{notice.object['metadata']['name']}"
               cached    = @cache[cache_key]
               if cached
@@ -403,6 +404,7 @@ module Fluent
                 @cache[cache_key] = cached
               end
             when 'DELETED'
+              log.debug "look, a pod was deleted!"
               cache_key = "#{notice.object['metadata']['namespace']}_#{notice.object['metadata']['name']}"
               @cache.delete(cache_key)
             else
