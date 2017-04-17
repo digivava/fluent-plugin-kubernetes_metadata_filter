@@ -107,15 +107,13 @@ module Fluent
       require 'kubeclient'
       require 'active_support/core_ext/object/blank'
       require 'lru_redux'
-      require 'fluent/log'
-      require 'logfmt'
       require 'fluent-logger'
 
       f = Fluent::Logger::LevelFluentLogger.new('fluent')
 
       f.debug("I'm fluent-logger! look, I'm logging!")
 
-      # log.debug "debug! look, I'm logging!"
+      log.debug "debug! look, I'm configuring!"
       # log.trace "trace! look, I'm logging!"
       # log.warn "warn! look, I'm logging!"
       # puts "puts! look, I'm logging!"
@@ -241,7 +239,7 @@ module Fluent
                 metadata['kubernetes']['namespace_name'],
                 metadata['kubernetes']['pod_id']
               )
-              log.debug "(from json files) get_metadata(#{metadata['kubernetes']['namespace_name']},
+              f.debug "(from json files) get_metadata(#{metadata['kubernetes']['namespace_name']},
               #{metadata['kubernetes']['pod_id']}): #{md}"
               md
             end
@@ -301,7 +299,7 @@ module Fluent
                     metadata['kubernetes']['namespace_name'],
                     metadata['kubernetes']['pod_id']
                   )
-                  log.debug "(from journal) get_metadata(#{metadata['kubernetes']['namespace_name']},
+                  f.debug "(from journal) get_metadata(#{metadata['kubernetes']['namespace_name']},
                   #{metadata['kubernetes']['pod_id']}): #{md}"
                   md
                 end
