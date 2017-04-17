@@ -74,6 +74,7 @@ module Fluent
     end
 
     def get_metadata(namespace_name, pod_id)
+      log.debug "look, I made it into get_metadata function!"
       begin
         metadata = @client.get_pod(pod_id, namespace_name)
         return if !metadata
@@ -91,6 +92,7 @@ module Fluent
             'host'           => metadata['spec']['nodeName']
         }
         kubernetes_metadata['annotations'] = annotations unless annotations.empty?
+        log.debug "look, after get_metadata, kubernetes metadata is #{kubernetes_metadata}"
         return kubernetes_metadata
       rescue KubeException
         nil
@@ -109,9 +111,6 @@ module Fluent
       require 'lru_redux'
 
       log.debug "debug! look, I'm configuring!"
-      # log.trace "trace! look, I'm logging!"
-      # log.warn "warn! look, I'm logging!"
-      # puts "puts! look, I'm logging!"
 
       if @de_dot && (@de_dot_separator =~ /\./).present?
         raise Fluent::ConfigError, "Invalid de_dot_separator: cannot be or contain '.'"
@@ -209,6 +208,7 @@ module Fluent
     end
 
     def filter_stream_from_files(tag, es)
+      log.debug "look, I'm filtering stream from files! wait huh?!"
       new_es = MultiEventStream.new
 
       match_data = tag.match(@tag_to_kubernetes_name_regexp_compiled)
@@ -266,13 +266,16 @@ module Fluent
     end
 
     def filter_stream_from_journal(tag, es)
+      log.debug "look, I'm filtering stream from journal!"
       new_es = MultiEventStream.new
 
       es.each { |time, record|
         record = merge_json_log(record) if @merge_json_log
 
         metadata = nil
+        # if it's the kind of event that represents a container (so like, not the other docker-daemon events)
         if record.has_key?('CONTAINER_NAME') && record.has_key?('CONTAINER_ID_FULL')
+          # for each individual log for that container
           metadata = record['CONTAINER_NAME'].match(@container_name_to_kubernetes_regexp_compiled) do |match_data|
             metadata = {
               'docker' => {
@@ -283,13 +286,15 @@ module Fluent
                 'pod_id'       => match_data['pod_id']
               }
             }
+            log.debug "look, log record had both CONTAINER_NAME and CONTAINER_ID_FULL. \n so the docker-kube equivalents of this container is #{metadata}"
             if @kubernetes_url.present?
               cache_key = "#{metadata['kubernetes']['namespace_name']}_#{metadata['kubernetes']['pod_id']}"
 
 
+              log.debug "look, cache key is #{cache_key}"
               this     = self
+              # if the cache_key already exists, use it. otherwise, set the cache key to what's in the following block
               kubernetes_metadata = @cache.getset(cache_key) {
-                if metadata
                   md = this.get_metadata(
                     metadata['kubernetes']['namespace_name'],
                     metadata['kubernetes']['pod_id']
@@ -297,10 +302,12 @@ module Fluent
                   log.debug "(from journal) get_metadata(#{metadata['kubernetes']['namespace_name']},
                   #{metadata['kubernetes']['pod_id']}): #{md}"
                   md
-                end
               }
+              log.debug "but look, now cache key is #{cache_key}"
+              # use all the k8s metadata info about that container from the cache, whether that be the same as last time or something new
               metadata['kubernetes'].merge!(kubernetes_metadata) if kubernetes_metadata
 
+              # add a namespace to the metadata if that matters (configured separately)
               if @include_namespace_id
                 namespace_name = metadata['kubernetes']['namespace_name']
                 namespace_id = @namespace_cache.getset(namespace_name) {
