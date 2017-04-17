@@ -383,8 +383,11 @@ module Fluent
       @log.debug "look, you started the watch!"
       loop do
         begin
+          @log.debug "look, we're about to get the resource version"
           resource_version = @client.get_pods.resourceVersion
+          @log.debug "look, resource version was #{resource_version}"
           watcher          = @client.watch_pods(resource_version)
+          @log.debug "look, we now have a watcher variable"
         rescue Exception => e
           raise Fluent::ConfigError, "Exception encountered fetching metadata from Kubernetes API endpoint: #{e.message}"
         end
