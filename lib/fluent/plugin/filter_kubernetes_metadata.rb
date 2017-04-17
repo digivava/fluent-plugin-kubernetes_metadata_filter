@@ -390,6 +390,7 @@ module Fluent
         end
 
         watcher.each do |notice|
+          @log.debug "look, the watcher has noticed things!"
           case notice.type
             when 'MODIFIED'
               @log.debug "look, a pod was modified!"
