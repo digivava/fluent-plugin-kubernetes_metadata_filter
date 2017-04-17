@@ -109,11 +109,16 @@ module Fluent
       require 'lru_redux'
       require 'fluent/log'
       require 'logfmt'
+      require 'fluent-logger'
 
-      log.debug "debug! look, I'm logging!"
-      log.trace "trace! look, I'm logging!"
-      log.warn "warn! look, I'm logging!"
-      puts "puts! look, I'm logging!"
+      f = Fluent::Logger::LevelFluentLogger.new('fluent')
+
+      f.debug("I'm fluent-logger! look, I'm logging!")
+
+      # log.debug "debug! look, I'm logging!"
+      # log.trace "trace! look, I'm logging!"
+      # log.warn "warn! look, I'm logging!"
+      # puts "puts! look, I'm logging!"
 
       if @de_dot && (@de_dot_separator =~ /\./).present?
         raise Fluent::ConfigError, "Invalid de_dot_separator: cannot be or contain '.'"
