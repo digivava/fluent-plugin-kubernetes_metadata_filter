@@ -281,6 +281,7 @@ module Fluent
           # for each individual log for that container
           metadata = record['CONTAINER_NAME'].match(@container_name_to_kubernetes_regexp_compiled) do |match_data|
             log.debug "look, match data: #{match_data}"
+            log.debug "match_data is a #{match_data.class}"
             metadata = {
               'docker' => {
                 'container_id' => record['CONTAINER_ID_FULL']
