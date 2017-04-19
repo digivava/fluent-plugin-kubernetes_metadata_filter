@@ -274,7 +274,7 @@ module Fluent
 
       es.each { |time, record|
         record = merge_json_log(record) if @merge_json_log
-
+        log.debug "look, each event has a time and a record. for this one-- time: #{time}, record: #{record}"
         metadata = nil
         # if it's the kind of event that represents a container (so like, not the other docker-daemon events)
         if record.has_key?('CONTAINER_NAME') && record.has_key?('CONTAINER_ID_FULL')
