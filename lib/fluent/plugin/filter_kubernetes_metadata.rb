@@ -185,7 +185,6 @@ module Fluent
       if @use_journal
         @merge_json_log_key = 'MESSAGE'
         self.class.class_eval { alias_method :filter_stream, :filter_stream_from_journal }
-        # filter_stream_from_journal(self)
       else
         @merge_json_log_key = 'log'
         self.class.class_eval { alias_method :filter_stream, :filter_stream_from_files }
@@ -306,6 +305,7 @@ module Fluent
               end
             end
             metadata['kubernetes']['container_name'] = match_data['container_name']
+            log.debug "final metadata to output is: #{metadata}"
             metadata
           end
           unless metadata
