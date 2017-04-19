@@ -74,10 +74,10 @@ module Fluent
       newhsh
     end
 
-    def get_metadata(namespace_name, pod_id)
+    def get_metadata(namespace_name, pod_name)
       log.debug "look, I made it into get_metadata function!"
       begin
-        metadata = @client.get_pod(pod_id, namespace_name)
+        metadata = @client.get_pod(pod_name, namespace_name)
         return if !metadata
         labels = syms_to_strs(metadata['metadata']['labels'].to_h)
         annotations = match_annotations(syms_to_strs(metadata['metadata']['annotations'].to_h))
@@ -87,8 +87,8 @@ module Fluent
         end
         kubernetes_metadata = {
             'namespace_name' => namespace_name,
-            'pod_id'         => pod_id,
-            'pod_name'       => metadata['metadata']['name'],
+            'pod_id'         => metadata['metadata']['uid'],
+            'pod_name'       => pod_name,
             'labels'         => labels,
             'host'           => metadata['spec']['nodeName']
         }
@@ -211,61 +211,61 @@ module Fluent
     end
 
     def filter_stream_from_files(tag, es)
-      log.debug "look, I'm filtering stream from files! wait huh?!"
-      new_es = MultiEventStream.new
-
-      match_data = tag.match(@tag_to_kubernetes_name_regexp_compiled)
-
-      if match_data
-        metadata = {
-          'docker' => {
-            'container_id' => match_data['docker_id']
-          },
-          'kubernetes' => {
-            'namespace_name' => match_data['namespace'],
-            'pod_id'       => match_data['pod_id'],
-          }
-        }
-
-        if @kubernetes_url.present?
-          cache_key = "#{metadata['kubernetes']['namespace_name']}_#{metadata['kubernetes']['pod_id']}"
-
-          this     = self
-          kubernetes_metadata = @cache.getset(cache_key) {
-            if metadata
-              md = this.get_metadata(
-                metadata['kubernetes']['namespace_name'],
-                metadata['kubernetes']['pod_id']
-              )
-              log.debug "(from json files) get_metadata(#{metadata['kubernetes']['namespace_name']},
-              #{metadata['kubernetes']['pod_id']}): #{md}"
-              md
-            end
-          }
-          metadata['kubernetes'].merge!(kubernetes_metadata) if kubernetes_metadata
-
-          if @include_namespace_id
-            namespace_name = metadata['kubernetes']['namespace_name']
-            namespace_id = @namespace_cache.getset(namespace_name) {
-              namespace = @client.get_namespace(namespace_name)
-              namespace['metadata']['uid'] if namespace
-            }
-            metadata['kubernetes']['namespace_id'] = namespace_id if namespace_id
-          end
-        end
-
-        metadata['kubernetes']['container_name'] = match_data['container_name']
-      end
-
-      es.each { |time, record|
-        record = merge_json_log(record) if @merge_json_log
-
-        record = record.merge(metadata) if metadata
-
-        new_es.add(time, record)
-      }
-
-      new_es
+      # log.debug "look, I'm filtering stream from files! wait huh?!"
+      # new_es = MultiEventStream.new
+      #
+      # match_data = tag.match(@tag_to_kubernetes_name_regexp_compiled)
+      #
+      # if match_data
+      #   metadata = {
+      #     'docker' => {
+      #       'container_id' => match_data['docker_id']
+      #     },
+      #     'kubernetes' => {
+      #       'namespace_name' => match_data['namespace'],
+      #       'pod_id'       => match_data['pod_id'],
+      #     }
+      #   }
+      #
+      #   if @kubernetes_url.present?
+      #     cache_key = "#{metadata['kubernetes']['namespace_name']}_#{metadata['kubernetes']['pod_id']}"
+      #
+      #     this     = self
+      #     kubernetes_metadata = @cache.getset(cache_key) {
+      #       if metadata
+      #         md = this.get_metadata(
+      #           metadata['kubernetes']['namespace_name'],
+      #           metadata['kubernetes']['pod_name']
+      #         )
+      #         log.debug "(from json files) get_metadata(#{metadata['kubernetes']['namespace_name']},
+      #         #{metadata['kubernetes']['pod_name']}): #{md}"
+      #         md
+      #       end
+      #     }
+      #     metadata['kubernetes'].merge!(kubernetes_metadata) if kubernetes_metadata
+      #
+      #     if @include_namespace_id
+      #       namespace_name = metadata['kubernetes']['namespace_name']
+      #       namespace_id = @namespace_cache.getset(namespace_name) {
+      #         namespace = @client.get_namespace(namespace_name)
+      #         namespace['metadata']['uid'] if namespace
+      #       }
+      #       metadata['kubernetes']['namespace_id'] = namespace_id if namespace_id
+      #     end
+      #   end
+      #
+      #   metadata['kubernetes']['container_name'] = match_data['container_name']
+      # end
+      #
+      # es.each { |time, record|
+      #   record = merge_json_log(record) if @merge_json_log
+      #
+      #   record = record.merge(metadata) if metadata
+      #
+      #   new_es.add(time, record)
+      # }
+      #
+      # new_es
     end
 
     def filter_stream_from_journal(tag, es)
@@ -287,27 +287,26 @@ module Fluent
               },
               'kubernetes' => {
                 'namespace_name' => match_data['namespace'],
+                'pod_name' => match_data['pod_name'],
                 'pod_id'       => match_data['pod_id']
               }
             }
-            log.debug "look, log record had both CONTAINER_NAME and CONTAINER_ID_FULL. \n so the docker-kube equivalents of this container is #{metadata}"
+            log.debug "look, log record had both CONTAINER_NAME and CONTAINER_ID_FULL. \n so metadata is #{metadata}"
             if @kubernetes_url.present?
               cache_key = "#{metadata['kubernetes']['namespace_name']}_#{metadata['kubernetes']['pod_id']}"
 
 
               log.debug "look, cache key is #{cache_key}"
               this     = self
-              # if the cache_key already exists, use it. otherwise, set the cache key to what's in the following block
+              # if the cache_key already exists, use it. otherwise, set the cache key's value to what's in the following block
               kubernetes_metadata = @cache.getset(cache_key) {
                   md = this.get_metadata(
                     metadata['kubernetes']['namespace_name'],
-                    metadata['kubernetes']['pod_id']
+                    metadata['kubernetes']['pod_name']
                   )
-                  log.debug "(from journal) get_metadata(#{metadata['kubernetes']['namespace_name']},
-                  #{metadata['kubernetes']['pod_id']}): #{md}"
+                  log.debug "look, that cache key didn't have a value yet. setting it to: #{md}"
                   md
               }
-              log.debug "but look, now cache key is #{cache_key}"
               # use all the k8s metadata info about that container from the cache, whether that be the same as last time or something new
               metadata['kubernetes'].merge!(kubernetes_metadata) if kubernetes_metadata
 
