@@ -269,7 +269,6 @@ module Fluent
     end
 
     def filter_stream_from_journal(tag, es)
-      log.debug "look, a new thing!"
       new_es = MultiEventStream.new
 
       es.each { |time, record|
