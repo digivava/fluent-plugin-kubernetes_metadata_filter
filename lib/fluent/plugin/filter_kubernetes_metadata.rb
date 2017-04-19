@@ -387,7 +387,7 @@ module Fluent
           resource_version = @client.get_pods.resourceVersion
           log.debug "look, resource version was #{resource_version}"
           watcher          = @client.watch_pods(resource_version)
-          log.debug "look, we now have a watcher variable"
+          log.debug "look, we now have a watch stream"
         rescue Exception => e
           log.debug "look, I'm in the rescue"
           raise Fluent::ConfigError, "Exception encountered fetching metadata from Kubernetes API endpoint: #{e.message}"
@@ -398,6 +398,7 @@ module Fluent
           case notice.type
             when 'MODIFIED'
               log.debug "look, a pod was modified!"
+              log.debug "look, the metadata for this notice.object is #{notice.object['metadata']}"
               cache_key = "#{notice.object['metadata']['namespace']}_#{notice.object['metadata']['name']}"
               cached    = @cache[cache_key]
               if cached
