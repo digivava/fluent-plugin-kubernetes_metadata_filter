@@ -398,8 +398,7 @@ module Fluent
           case notice.type
             when 'MODIFIED'
               log.debug "look, a pod was modified!"
-              log.debug "look, the metadata for this notice.object is #{notice.object['metadata']}"
-              cache_key = "#{notice.object['metadata']['namespace']}_#{notice.object['metadata']['name']}"
+              cache_key = "#{notice.object['metadata']['namespace']}_#{notice.object['metadata']['uid']}"
               cached    = @cache[cache_key]
               if cached
                 # Only thing that can be modified is labels and (possibly) annotations
@@ -415,7 +414,7 @@ module Fluent
               end
             when 'DELETED'
               log.debug "look, a pod was deleted!"
-              cache_key = "#{notice.object['metadata']['namespace']}_#{notice.object['metadata']['name']}"
+              cache_key = "#{notice.object['metadata']['namespace']}_#{notice.object['metadata']['uid']}"
               @cache.delete(cache_key)
             else
               # Don't pay attention to creations, since the created pod may not
