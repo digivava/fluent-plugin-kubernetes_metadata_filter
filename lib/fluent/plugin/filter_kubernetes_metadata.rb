@@ -75,7 +75,6 @@ module Fluent
     end
 
     def get_metadata(namespace_name, pod_name)
-      log.debug "look, I made it into get_metadata function!"
       begin
         metadata = @client.get_pod(pod_name, namespace_name)
         return if !metadata
@@ -93,7 +92,6 @@ module Fluent
             'host'           => metadata['spec']['nodeName']
         }
         kubernetes_metadata['annotations'] = annotations unless annotations.empty?
-        log.debug "look, after get_metadata, kubernetes metadata is #{kubernetes_metadata}"
         return kubernetes_metadata
       rescue KubeException
         nil
@@ -111,8 +109,6 @@ module Fluent
       require 'kubeclient'
       require 'active_support/core_ext/object/blank'
       require 'lru_redux'
-
-      log.debug "debug! look, I'm configuring!"
 
       if @de_dot && (@de_dot_separator =~ /\./).present?
         raise Fluent::ConfigError, "Invalid de_dot_separator: cannot be or contain '.'"
@@ -211,61 +207,58 @@ module Fluent
     end
 
     def filter_stream_from_files(tag, es)
-      # log.debug "look, I'm filtering stream from files! wait huh?!"
-      # new_es = MultiEventStream.new
-      #
-      # match_data = tag.match(@tag_to_kubernetes_name_regexp_compiled)
-      #
-      # if match_data
-      #   metadata = {
-      #     'docker' => {
-      #       'container_id' => match_data['docker_id']
-      #     },
-      #     'kubernetes' => {
-      #       'namespace_name' => match_data['namespace'],
-      #       'pod_id'       => match_data['pod_id'],
-      #     }
-      #   }
-      #
-      #   if @kubernetes_url.present?
-      #     cache_key = "#{metadata['kubernetes']['namespace_name']}_#{metadata['kubernetes']['pod_id']}"
-      #
-      #     this     = self
-      #     kubernetes_metadata = @cache.getset(cache_key) {
-      #       if metadata
-      #         md = this.get_metadata(
-      #           metadata['kubernetes']['namespace_name'],
-      #           metadata['kubernetes']['pod_name']
-      #         )
-      #         log.debug "(from json files) get_metadata(#{metadata['kubernetes']['namespace_name']},
-      #         #{metadata['kubernetes']['pod_name']}): #{md}"
-      #         md
-      #       end
-      #     }
-      #     metadata['kubernetes'].merge!(kubernetes_metadata) if kubernetes_metadata
-      #
-      #     if @include_namespace_id
-      #       namespace_name = metadata['kubernetes']['namespace_name']
-      #       namespace_id = @namespace_cache.getset(namespace_name) {
-      #         namespace = @client.get_namespace(namespace_name)
-      #         namespace['metadata']['uid'] if namespace
-      #       }
-      #       metadata['kubernetes']['namespace_id'] = namespace_id if namespace_id
-      #     end
-      #   end
-      #
-      #   metadata['kubernetes']['container_name'] = match_data['container_name']
-      # end
-      #
-      # es.each { |time, record|
-      #   record = merge_json_log(record) if @merge_json_log
-      #
-      #   record = record.merge(metadata) if metadata
-      #
-      #   new_es.add(time, record)
-      # }
-      #
-      # new_es
+      new_es = MultiEventStream.new
+
+      match_data = tag.match(@tag_to_kubernetes_name_regexp_compiled)
+
+      if match_data
+        metadata = {
+          'docker' => {
+            'container_id' => match_data['docker_id']
+          },
+          'kubernetes' => {
+            'namespace_name' => match_data['namespace'],
+            'pod_id'       => match_data['pod_id'],
+          }
+        }
+
+        if @kubernetes_url.present?
+          cache_key = "#{metadata['kubernetes']['namespace_name']}_#{metadata['kubernetes']['pod_id']}"
+
+          this     = self
+          kubernetes_metadata = @cache.getset(cache_key) {
+            if metadata
+              md = this.get_metadata(
+                metadata['kubernetes']['namespace_name'],
+                metadata['kubernetes']['pod_name']
+              )
+              md
+            end
+          }
+          metadata['kubernetes'].merge!(kubernetes_metadata) if kubernetes_metadata
+
+          if @include_namespace_id
+            namespace_name = metadata['kubernetes']['namespace_name']
+            namespace_id = @namespace_cache.getset(namespace_name) {
+              namespace = @client.get_namespace(namespace_name)
+              namespace['metadata']['uid'] if namespace
+            }
+            metadata['kubernetes']['namespace_id'] = namespace_id if namespace_id
+          end
+        end
+
+        metadata['kubernetes']['container_name'] = match_data['container_name']
+      end
+
+      es.each { |time, record|
+        record = merge_json_log(record) if @merge_json_log
+
+        record = record.merge(metadata) if metadata
+
+        new_es.add(time, record)
+      }
+
+      new_es
     end
 
     def filter_stream_from_journal(tag, es)
@@ -273,14 +266,11 @@ module Fluent
 
       es.each { |time, record|
         record = merge_json_log(record) if @merge_json_log
-        log.debug "look, each event has a time and a record. for this one-- time: #{time}, record: #{record}"
         metadata = nil
         # if it's the kind of event that represents a container (so like, not the other docker-daemon events)
         if record.has_key?('CONTAINER_NAME') && record.has_key?('CONTAINER_ID_FULL')
           # for each individual log for that container
           metadata = record['CONTAINER_NAME'].match(@container_name_to_kubernetes_regexp_compiled) do |match_data|
-            log.debug("look, this is @container_name_to_kubernetes_regexp_compiled: #{@container_name_to_kubernetes_regexp_compiled}")
-            log.debug "look, match data: #{match_data}"
             metadata = {
               'docker' => {
                 'container_id' => record['CONTAINER_ID_FULL']
@@ -291,12 +281,8 @@ module Fluent
                 'pod_id'       => match_data['pod_id']
               }
             }
-            log.debug "look, log record had both CONTAINER_NAME and CONTAINER_ID_FULL. \n so metadata is #{metadata}"
             if @kubernetes_url.present?
               cache_key = "#{metadata['kubernetes']['namespace_name']}_#{metadata['kubernetes']['pod_id']}"
-
-
-              log.debug "look, cache key is #{cache_key}"
               this     = self
               # if the cache_key already exists, use it. otherwise, set the cache key's value to what's in the following block
               kubernetes_metadata = @cache.getset(cache_key) {
@@ -304,7 +290,6 @@ module Fluent
                     metadata['kubernetes']['namespace_name'],
                     metadata['kubernetes']['pod_name']
                   )
-                  log.debug "look, that cache key didn't have a value yet. setting it to: #{md}"
                   md
               }
               # use all the k8s metadata info about that container from the cache, whether that be the same as last time or something new
@@ -379,25 +364,17 @@ module Fluent
     end
 
     def start_watch
-      log.debug "look, you started the watch!"
       loop do
-        log.debug "look, I'm in the loop"
         begin
-          log.debug "look, we're about to get the resource version"
           resource_version = @client.get_pods.resourceVersion
-          log.debug "look, resource version was #{resource_version}"
           watcher          = @client.watch_pods(resource_version)
-          log.debug "look, we now have a watch stream"
         rescue Exception => e
-          log.debug "look, I'm in the rescue"
           raise Fluent::ConfigError, "Exception encountered fetching metadata from Kubernetes API endpoint: #{e.message}"
         end
 
         watcher.each do |notice|
-          log.debug "look, the watcher has noticed things!"
           case notice.type
             when 'MODIFIED'
-              log.debug "look, a pod was modified!"
               cache_key = "#{notice.object['metadata']['namespace']}_#{notice.object['metadata']['uid']}"
               cached    = @cache[cache_key]
               if cached
@@ -413,7 +390,6 @@ module Fluent
                 @cache[cache_key] = cached
               end
             when 'DELETED'
-              log.debug "look, a pod was deleted!"
               cache_key = "#{notice.object['metadata']['namespace']}_#{notice.object['metadata']['uid']}"
               @cache.delete(cache_key)
             else
