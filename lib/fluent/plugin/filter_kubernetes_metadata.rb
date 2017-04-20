@@ -305,7 +305,6 @@ module Fluent
               end
             end
             metadata['kubernetes']['container_name'] = match_data['container_name']
-            log.debug "final metadata to output is: #{metadata}"
             metadata
           end
           unless metadata
@@ -315,7 +314,8 @@ module Fluent
           log.debug "Error: no container name and id in record #{record}"
         end
 
-        if metadata
+        # send only those with the label log-to-splunk=true
+        if metadata && metadata['labels']['log-to-splunk'] == "true"
           record = record.merge(metadata)
         end
 
