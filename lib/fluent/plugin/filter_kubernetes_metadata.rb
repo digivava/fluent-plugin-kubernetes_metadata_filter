@@ -315,8 +315,7 @@ module Fluent
         end
 
         # send only those with the label log-to-splunk=true
-        if metadata
-          log.debug "metadata class is: #{metadata.class}"
+        if metadata && metadata['labels']
           if metadata['labels']['log-to-splunk'] == "true"
             record = record.merge(metadata)
           end
