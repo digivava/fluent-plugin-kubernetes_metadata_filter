@@ -316,9 +316,10 @@ module Fluent
 
         # send only those with the label log-to-splunk=true
         if metadata && metadata['labels']
-          if metadata['labels']['log-to-splunk'] == "true"
-            record = record.merge(metadata)
+          if metadata['labels']['log-to-splunk'] != "true"
+            next
           end
+          record = record.merge(metadata)
         end
 
         new_es.add(time, record)
