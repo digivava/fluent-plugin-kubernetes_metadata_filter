@@ -318,7 +318,9 @@ module Fluent
           record = record.merge(metadata)
         end
 
-        new_es.add(time, record)
+        if record['kubernetes']['labels'].has_key?('log-to-splunk') && record['kubernetes']['labels']['log-to-splunk'] == "true"
+          new_es.add(time, record)
+        end
       }
 
       new_es
