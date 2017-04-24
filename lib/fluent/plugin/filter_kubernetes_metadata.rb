@@ -314,11 +314,7 @@ module Fluent
           log.debug "Error: no container name and id in record #{record}"
         end
 
-        # send only those with the label log-to-splunk=true
-        if metadata && metadata['labels']
-          if metadata['labels']['log-to-splunk'] != "true"
-            next
-          end
+        if metadata
           record = record.merge(metadata)
         end
 
