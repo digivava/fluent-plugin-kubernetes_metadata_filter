@@ -320,9 +320,12 @@ module Fluent
 
         log.debug "look, record is: #{record}"
 
-        # if record['kubernetes']['labels'].has_key?('log-to-splunk') && record['kubernetes']['labels']['log-to-splunk'] == "true"
-          new_es.add(time, record)
-        # end
+        if record.has_key?('kubernetes')
+          if record['kubernetes'].has_key?('labels') && record['kubernetes']['labels'].has_key?('log-to-splunk')
+            if record['kubernetes']['labels']['log-to-splunk'] == "true"
+            new_es.add(time, record)
+          end
+        end
       }
 
       new_es
