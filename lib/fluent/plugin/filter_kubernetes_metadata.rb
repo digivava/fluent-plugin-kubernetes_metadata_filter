@@ -323,7 +323,8 @@ module Fluent
         if record.has_key?('kubernetes')
           if record['kubernetes'].has_key?('labels') && record['kubernetes']['labels'].has_key?('log-to-splunk')
             if record['kubernetes']['labels']['log-to-splunk'] == "true"
-            new_es.add(time, record)
+              new_es.add(time, record)
+            end
           end
         end
       }
