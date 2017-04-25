@@ -321,10 +321,7 @@ module Fluent
         if record.has_key?('kubernetes')
           if record['kubernetes'].has_key?('labels') && record['kubernetes']['labels'].has_key?('log-to-splunk')
             if record['kubernetes']['labels']['log-to-splunk'] == "true"
-              log.debug "look, this record has the right label for splunking"
               new_es.add(time, record)
-            else
-              log.debug "look, this record should not be splunked"
             end
           end
         end
