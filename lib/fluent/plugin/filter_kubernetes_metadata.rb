@@ -55,7 +55,7 @@ module Fluent
     # non-capturing :P
     config_param :container_name_to_kubernetes_regexp,
                  :string,
-                 :default => '^k8s_(?<container_name>[^\.]+)\.[^_]+_(?<pod_name>[^_]+)_(?<namespace>[^_]+)_(?<pod_id>[^_]+)_[a-f0-9]{8}$'
+                 :default => '^k8s_(?<container_name>[^_]+)_(?<pod_name>[^_]+)_(?<namespace>[^_]+)_(?<pod_id>[^_]+)_[a-f0-9]{1}$'
 
     config_param :annotation_match, :array, default: []
     config_param :logging, :string, default: "true"
