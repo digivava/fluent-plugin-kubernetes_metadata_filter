@@ -58,7 +58,7 @@ module Fluent
                  :default => '^k8s_(?<container_name>[^_]+)_(?<pod_name>[^_]+)_(?<namespace>[^_]+)_(?<pod_id>[^_]+)_[a-f0-9]{1}$'
 
     config_param :annotation_match, :array, default: []
-    config_param :logging, :string, default: "true"
+    # config_param :logging, :string, default: "true"
 
     def syms_to_strs(hsh)
       newhsh = {}
@@ -286,7 +286,9 @@ module Fluent
               }
             }
             log.debug("look it's metadata: #{metadata}")
+            log.debug("look, kubernetes_url is: #{@kubernetes_url}")
             if @kubernetes_url.present?
+              log.debug("look, kubernetes_url was present")
               cache_key = "#{metadata['kubernetes']['namespace_name']}_#{metadata['kubernetes']['pod_id']}"
               this     = self
               # if the cache_key already exists, use it. otherwise, set the cache key's value to what's in the following block
@@ -326,7 +328,7 @@ module Fluent
 
         if record.has_key?('kubernetes')
           if record['kubernetes'].has_key?('labels') && record['kubernetes']['labels'].has_key?('log-to-splunk')
-            if record['kubernetes']['labels'][@logging] == "true"
+            if record['kubernetes']['labels']['log-to-splunk'] == "true"
               new_es.add(time, record)
             end
           end
