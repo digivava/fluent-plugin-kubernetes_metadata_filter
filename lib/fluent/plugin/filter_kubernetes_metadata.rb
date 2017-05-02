@@ -272,6 +272,7 @@ module Fluent
         if record.has_key?('CONTAINER_NAME') && record.has_key?('CONTAINER_ID_FULL')
           # for each individual log for that container
           log.debug("look, this record has the CONTAINER_NAME #{record['CONTAINER_NAME']}")
+          log.debug("look, the regexp we're using is: #{@container_name_to_kubernetes_regexp_compiled}")
           metadata = record['CONTAINER_NAME'].match(@container_name_to_kubernetes_regexp_compiled) do |match_data|
             log.debug("look, match data was found!")
             metadata = {
