@@ -81,6 +81,7 @@ module Fluent
         return if !metadata
         labels = syms_to_strs(metadata['metadata']['labels'].to_h)
         annotations = match_annotations(syms_to_strs(metadata['metadata']['annotations'].to_h))
+        log.debug("look, annotations: #{annotations}")
         if @de_dot
           self.de_dot!(labels)
           self.de_dot!(annotations)
@@ -93,6 +94,7 @@ module Fluent
             'host'           => metadata['spec']['nodeName']
         }
         kubernetes_metadata['annotations'] = annotations unless annotations.empty?
+        log.debug("look, get_metadata returns: #{kubernetes_metadata}")
         return kubernetes_metadata
       rescue KubeException
         nil
@@ -286,9 +288,7 @@ module Fluent
               }
             }
             log.debug("look it's metadata: #{metadata}")
-            log.debug("look, kubernetes_url is: #{@kubernetes_url}")
             if @kubernetes_url.present?
-              log.debug("look, kubernetes_url was present")
               cache_key = "#{metadata['kubernetes']['namespace_name']}_#{metadata['kubernetes']['pod_id']}"
               this     = self
               # if the cache_key already exists, use it. otherwise, set the cache key's value to what's in the following block
