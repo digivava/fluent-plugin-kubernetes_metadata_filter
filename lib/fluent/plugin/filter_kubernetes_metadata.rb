@@ -285,6 +285,7 @@ module Fluent
                 'pod_id'       => match_data['pod_id']
               }
             }
+            log.debug("look it's metadata: #{metadata}")
             if @kubernetes_url.present?
               cache_key = "#{metadata['kubernetes']['namespace_name']}_#{metadata['kubernetes']['pod_id']}"
               this     = self
