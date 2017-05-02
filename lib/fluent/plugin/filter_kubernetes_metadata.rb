@@ -267,11 +267,13 @@ module Fluent
       es.each { |time, record|
         record = merge_json_log(record) if @merge_json_log
         metadata = nil
+        log.debug("look, it's a record: #{record}")
         # if it's the kind of event that represents a container (so like, not the other docker-daemon events)
         if record.has_key?('CONTAINER_NAME') && record.has_key?('CONTAINER_ID_FULL')
           # for each individual log for that container
           log.debug("look, this record has the CONTAINER_NAME #{record['CONTAINER_NAME']}")
           metadata = record['CONTAINER_NAME'].match(@container_name_to_kubernetes_regexp_compiled) do |match_data|
+            log.debug("look, match data was found!")
             metadata = {
               'docker' => {
                 'container_id' => record['CONTAINER_ID_FULL']
