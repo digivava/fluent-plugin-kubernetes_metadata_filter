@@ -58,6 +58,7 @@ module Fluent
                  :default => '^k8s_(?<container_name>[^\.]+)\.[^_]+_(?<pod_name>[^_]+)_(?<namespace>[^_]+)_(?<pod_id>[^_]+)_[a-f0-9]{8}$'
 
     config_param :annotation_match, :array, default: []
+    config_param :logging, :string, default: "true"
 
     def syms_to_strs(hsh)
       newhsh = {}
@@ -269,6 +270,7 @@ module Fluent
         # if it's the kind of event that represents a container (so like, not the other docker-daemon events)
         if record.has_key?('CONTAINER_NAME') && record.has_key?('CONTAINER_ID_FULL')
           # for each individual log for that container
+          log.debug("look, this record has the CONTAINER_NAME #{record['CONTAINER_NAME']}")
           metadata = record['CONTAINER_NAME'].match(@container_name_to_kubernetes_regexp_compiled) do |match_data|
             metadata = {
               'docker' => {
@@ -320,7 +322,7 @@ module Fluent
 
         if record.has_key?('kubernetes')
           if record['kubernetes'].has_key?('labels') && record['kubernetes']['labels'].has_key?('log-to-splunk')
-            if record['kubernetes']['labels']['log-to-splunk'] == "true"
+            if record['kubernetes']['labels'][@logging] == "true"
               new_es.add(time, record)
             end
           end
