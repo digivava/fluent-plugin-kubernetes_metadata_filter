@@ -94,7 +94,7 @@ module Fluent
             'labels'         => labels,
             'host'           => metadata['spec']['nodeName']
         }
-        kubernetes_metadata['annotations'] = annotations unless annotations.empty?
+        kubernetes_metadata['annotations'] = annotations unless !annotations
         log.debug("look, get_metadata returns: #{kubernetes_metadata}")
         return kubernetes_metadata
       rescue KubeException
