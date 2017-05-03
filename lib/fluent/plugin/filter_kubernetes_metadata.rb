@@ -82,7 +82,6 @@ module Fluent
         labels = syms_to_strs(metadata['metadata']['labels'].to_h)
         # annotations = match_annotations(syms_to_strs(metadata['metadata']['annotations'].to_h))
         annotations = syms_to_strs(metadata['metadata']['annotations'].to_h)
-        log.debug("look, annotations: #{annotations}")
         if @de_dot
           self.de_dot!(labels)
           self.de_dot!(annotations)
@@ -95,7 +94,6 @@ module Fluent
             'host'           => metadata['spec']['nodeName']
         }
         kubernetes_metadata['annotations'] = annotations unless !annotations
-        log.debug("look, get_metadata returns: #{kubernetes_metadata}")
         return kubernetes_metadata
       rescue KubeException
         nil
@@ -273,7 +271,6 @@ module Fluent
         # if it's the kind of event that represents a container (so like, not the other docker-daemon events)
         if record.has_key?('CONTAINER_NAME') && record.has_key?('CONTAINER_ID_FULL')
           # for each individual log for that container
-          log.debug("look, this record has the CONTAINER_NAME #{record['CONTAINER_NAME']}")
           metadata = record['CONTAINER_NAME'].match(@container_name_to_kubernetes_regexp_compiled) do |match_data|
             metadata = {
               'docker' => {
@@ -285,7 +282,6 @@ module Fluent
                 'pod_id'       => match_data['pod_id']
               }
             }
-            log.debug("look it's metadata: #{metadata}")
             if @kubernetes_url.present?
               cache_key = "#{metadata['kubernetes']['namespace_name']}_#{metadata['kubernetes']['pod_id']}"
               this     = self
@@ -362,17 +358,17 @@ module Fluent
       end
     end
 
-    def match_annotations(annotations)
-      result = {}
-      @annotations_regexps.each do |regexp|
-        annotations.each do |key, value|
-          if ::Fluent::StringUtil.match_regexp(regexp, key.to_s)
-            result[key] = value
-          end
-        end
-      end
-      result
-    end
+    # def match_annotations(annotations)
+    #   result = {}
+    #   @annotations_regexps.each do |regexp|
+    #     annotations.each do |key, value|
+    #       if ::Fluent::StringUtil.match_regexp(regexp, key.to_s)
+    #         result[key] = value
+    #       end
+    #     end
+    #   end
+    #   result
+    # end
 
     def start_watch
       loop do
