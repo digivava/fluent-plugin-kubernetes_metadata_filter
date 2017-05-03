@@ -270,14 +270,11 @@ module Fluent
       es.each { |time, record|
         record = merge_json_log(record) if @merge_json_log
         metadata = nil
-        log.debug("look, it's a record: #{record}")
         # if it's the kind of event that represents a container (so like, not the other docker-daemon events)
         if record.has_key?('CONTAINER_NAME') && record.has_key?('CONTAINER_ID_FULL')
           # for each individual log for that container
           log.debug("look, this record has the CONTAINER_NAME #{record['CONTAINER_NAME']}")
-          log.debug("look, the regexp we're using is: #{@container_name_to_kubernetes_regexp_compiled}")
           metadata = record['CONTAINER_NAME'].match(@container_name_to_kubernetes_regexp_compiled) do |match_data|
-            log.debug("look, match data was found!")
             metadata = {
               'docker' => {
                 'container_id' => record['CONTAINER_ID_FULL']
@@ -394,7 +391,7 @@ module Fluent
               if cached
                 # Only thing that can be modified is labels and (possibly) annotations
                 labels = syms_to_strs(notice.object.metadata.labels.to_h)
-                annotations = match_annotations(syms_to_strs(notice.object.metadata.annotations.to_h))
+                annotations = syms_to_strs(notice.object.metadata.annotations.to_h)
                 if @de_dot
                   self.de_dot!(labels)
                   self.de_dot!(annotations)
