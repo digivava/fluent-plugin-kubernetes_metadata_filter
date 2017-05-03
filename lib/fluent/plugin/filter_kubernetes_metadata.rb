@@ -80,7 +80,8 @@ module Fluent
         metadata = @client.get_pod(pod_name, namespace_name)
         return if !metadata
         labels = syms_to_strs(metadata['metadata']['labels'].to_h)
-        annotations = match_annotations(syms_to_strs(metadata['metadata']['annotations'].to_h))
+        # annotations = match_annotations(syms_to_strs(metadata['metadata']['annotations'].to_h))
+        annotations = syms_to_strs(metadata['metadata']['annotations'].to_h)
         log.debug("look, annotations: #{annotations}")
         if @de_dot
           self.de_dot!(labels)
